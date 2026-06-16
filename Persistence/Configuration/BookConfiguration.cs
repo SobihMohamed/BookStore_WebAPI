@@ -12,6 +12,8 @@ namespace Persistence.Configuration
         public void Configure(EntityTypeBuilder<Book> builder)
         {
             builder.ToTable("Books");
+            builder.Property(b => b.Price)
+                   .HasColumnType("decimal(18,2)");
 
             //TPH Pattern
             builder.HasDiscriminator<string>("BookType")
