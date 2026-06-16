@@ -1,3 +1,8 @@
+using BookStore_Web.API.Extensions;
+using Domain.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Persistence.Context;
 
 namespace BookStore_Web.API
 {
@@ -7,10 +12,18 @@ namespace BookStore_Web.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddAuthorization();
+            // 1. Database Connection
+            builder.Services.AddDbContext<BookDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+            // 2. Inject Custom Extensions (Identity, Rate Limiting, CORS, JWT)
+            builder.Services.InjectIdentityCore();
+            builder.Services.InjectRateLimiting();
+            builder.Services.AddCustomCors(builder.Configuration);
+            builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment);
+
+            // 3. Controllers & Swagger
+            builder.Services.AddControllers();
             builder.Services.AddOpenApi();
 
             var app = builder.Build();
@@ -23,26 +36,15 @@ namespace BookStore_Web.API
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            // 4. Middlewares Pipeline 
+            app.UseRateLimiter(); 
 
-            var summaries = new[]
-            {
-                "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-            };
+            app.UseCors("CorsPolicy"); 
 
-            app.MapGet("/weatherforecast", (HttpContext httpContext) =>
-            {
-                var forecast = Enumerable.Range(1, 5).Select(index =>
-                    new WeatherForecast
-                    {
-                        Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                        TemperatureC = Random.Shared.Next(-20, 55),
-                        Summary = summaries[Random.Shared.Next(summaries.Length)]
-                    })
-                    .ToArray();
-                return forecast;
-            })
-            .WithName("GetWeatherForecast");
+            app.UseAuthentication(); 
+            app.UseAuthorization();  
+
+            app.MapControllers();
 
             app.Run();
         }
