@@ -7,7 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Abstraction\" />
+    <Compile Remove="Abstraction\**" />
+    <EmbeddedResource Remove="Abstraction\**" />
+    <None Remove="Abstraction\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Features\Authors\Commands\" />
     <Folder Include="Features\Authors\Queries\" />
     <Folder Include="Features\Books\Commands\" />

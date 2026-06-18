@@ -1,4 +1,5 @@
 using BookStore_Web.API.Extensions;
+using BookStore_Web.API.Middlewares;
 using Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,12 @@ namespace BookStore_Web.API
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
 
+            // Custom Exception Handling
+            builder.Services.AddCustomExceptionHandling();
+
             var app = builder.Build();
+            // Use Custom Exception Handling Middleware
+            app.UseCustomExceptionHandling();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
