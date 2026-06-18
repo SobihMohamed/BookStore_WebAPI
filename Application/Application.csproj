@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Abstraction\**" />
-    <EmbeddedResource Remove="Abstraction\**" />
-    <None Remove="Abstraction\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Features\Authors\Commands\" />
     <Folder Include="Features\Authors\Queries\" />
     <Folder Include="Features\Books\Commands\" />
@@ -23,11 +17,12 @@
     <Folder Include="Features\Identity\Queries\" />
     <Folder Include="Features\Orders\Commands\" />
     <Folder Include="Features\Orders\Queries\" />
-    <Folder Include="Specifications\" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="MediatR" Version="14.1.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
   </ItemGroup>
 
   <ItemGroup>

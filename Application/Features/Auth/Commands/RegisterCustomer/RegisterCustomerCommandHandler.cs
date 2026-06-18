@@ -1,4 +1,5 @@
-﻿using Application.DTOs.Auth;
+﻿using Application.Abstraction.Authentication;
+using Application.DTOs.Auth;
 using Domain.Contracts.UnitOfWorkPattern;
 using Domain.Models;
 using MediatR;
@@ -10,35 +11,38 @@ namespace Application.Features.Auth.Commands.RegisterCustomer
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IJwtProvider _jwtProvider; 
 
-        public RegisterCustomerCommandHandler(UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork)
+        public RegisterCustomerCommandHandler(
+            UserManager<ApplicationUser> userManager,
+            IUnitOfWork unitOfWork,
+            IJwtProvider jwtProvider) 
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
+            _jwtProvider = jwtProvider;
         }
 
         public async Task<AuthResponse> Handle(RegisterCustomerCommand request, CancellationToken cancellationToken)
         {
             var user = new ApplicationUser
             {
-                UserName = request.Email, 
+                UserName = request.Email,
                 Email = request.Email,
                 PhoneNumber = request.PhoneNumber
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
-            // middleware will handle the error, so we don't need to handle it here anymore
-            //if (!result.Succeeded)
-            //{
-            //    // هنرمي إيرور دلوقتي، ولما نوصل لـ Task 12 (Global Exception) هنظبط شكل الإيرور ده
-            //    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            //    throw new Exception($"Registration failed: {errors}");
-            //}
 
-            // 2. إعطاء صلاحية "Customer" للحساب ده
-            await _userManager.AddToRoleAsync(user, "Customer");
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception($"Registration failed: {errors}");
+            }
 
-            // 3. إنشاء ملف العميل (Customer Profile) وربطه بالحساب
+            var roleName = "Customer";
+            await _userManager.AddToRoleAsync(user, roleName);
+
             var customer = new Customer
             {
                 FullName = request.FullName,
@@ -49,12 +53,13 @@ namespace Application.Features.Auth.Commands.RegisterCustomer
             await customerRepo.AddAsync(customer);
             await _unitOfWork.SaveChangesAsync();
 
-            // 4. token generation logic will be added here in the future (Task 11)
+            var token = _jwtProvider.GenerateToken(user, new List<string> { roleName });
+
             return new AuthResponse
             {
                 FullName = customer.FullName,
                 Email = user.Email,
-                Token = "Token_Will_Be_Generated_Here_Soon"
+                Token = token 
             };
         }
     }
