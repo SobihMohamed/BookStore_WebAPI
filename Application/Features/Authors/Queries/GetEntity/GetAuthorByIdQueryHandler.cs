@@ -1,40 +1,42 @@
-﻿using Application.DTOs.Book;
-using Application.DTOs.Category;
-using Application.Specifications.CategorySpec;
+﻿using Application.DTOs.Author;
+using Application.DTOs.Book;
+using Application.Specifications.AuthrSpec;
 using Domain.Contracts.UnitOfWorkPattern;
 using Domain.Models;
 using MediatR;
+
 using static Domain.Exception_Handle.Exceptions;
 
-namespace Application.Features.Categories.Queries.GetEntity
+namespace Application.Features.Authors.Queries.GetEntity
 {
-    public class GetCategoryByIdQueryHandler : IRequestHandler<GetCategoryByIdQuery, CategoryWithBooksDto>
+    public class GetAuthorByIdQueryHandler : IRequestHandler<GetAuthorByIdQuery, AuthorWithBooksDto>
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        public GetCategoryByIdQueryHandler(IUnitOfWork unitOfWork)
+        public GetAuthorByIdQueryHandler(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<CategoryWithBooksDto> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
+        public async Task<AuthorWithBooksDto> Handle(GetAuthorByIdQuery request, CancellationToken cancellationToken)
         {
-            var categoryRepo = _unitOfWork.GetRepository<Category, int>();
+            var authorRepo = _unitOfWork.GetRepository<Author, int>();
 
-            var spec = new CategoryWithBooksSpecification(request.CategoryId);
-            var category = await categoryRepo.GetByIdWithSpecAsync(spec);
+            var spec = new AuthorWithBooksSpecification(request.AuthorId);
+            var author = await authorRepo.GetByIdWithSpecAsync(spec);
 
-            if (category == null)
+            if (author == null)
             {
-                throw new NotFoundException($"Category with ID {request.CategoryId} was not found.");
+                throw new NotFoundException($"Author with ID {request.AuthorId} was not found.");
             }
 
-            var categoryDto = new CategoryWithBooksDto
+            var authorDto = new AuthorWithBooksDto
             {
-                Id = category.Id,
-                Name = category.Name,
-
-                Books = category.Books
+                Id = author.Id,
+                Name = author.Name,
+                Bio = author.Bio,
+                Books = author.Books
+                    .Where(b => !b.IsDeleted) 
                     .Select(b => new BookDto
                     {
                         Id = b.Id,
@@ -53,7 +55,7 @@ namespace Application.Features.Categories.Queries.GetEntity
                     }).ToList()
             };
 
-            return categoryDto;
+            return authorDto;
         }
     }
 }
