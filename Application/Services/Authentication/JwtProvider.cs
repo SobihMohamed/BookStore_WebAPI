@@ -1,7 +1,6 @@
 ﻿using Application.Abstraction.Authentication;
-using Application.DTOs.Auth;
 using Domain.Models;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -11,20 +10,20 @@ namespace Application.Services.Authentication
 {
     public class JwtProvider : IJwtProvider
     {
-        private readonly JwtSettings _jwtSettings;
+        private readonly IConfiguration _configuration;
 
-        public JwtProvider(IOptions<JwtSettings> jwtSettings)
+        public JwtProvider(IConfiguration configuration)
         {
-            _jwtSettings = jwtSettings.Value;
+            _configuration = configuration;
         }
 
         public string GenerateToken(ApplicationUser user, IList<string> roles)
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id), 
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email!),
-                new Claim(ClaimTypes.Name, user.UserName!)
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             foreach (var role in roles)
@@ -32,16 +31,16 @@ namespace Application.Services.Authentication
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtTokenSettings:Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.DurationInMinutes),
-                Issuer = _jwtSettings.Issuer,
-                Audience = _jwtSettings.Audience,
-                SigningCredentials = credentials
+                Expires = DateTime.UtcNow.AddDays(double.Parse(_configuration["Jwt:DurationInDays"]!)),
+                Issuer = _configuration["Jwt:Issuer"],
+                Audience = _configuration["Jwt:Audience"],
+                SigningCredentials = creds
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
