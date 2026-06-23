@@ -10,6 +10,6 @@ namespace Application.DTOs.Author
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Bio { get; set; } = string.Empty;
-        public IEnumerable<BookDto> Books { get; set; } = new List<BookDto>();
+        public IEnumerable<BookDetailsDto> Books { get; set; } = new List<BookDetailsDto>();
     }
 }

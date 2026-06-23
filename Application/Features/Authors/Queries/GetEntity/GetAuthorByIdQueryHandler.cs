@@ -37,7 +37,7 @@ namespace Application.Features.Authors.Queries.GetEntity
                 Bio = author.Bio,
                 Books = author.Books
                     .Where(b => !b.IsDeleted) 
-                    .Select(b => new BookDto
+                    .Select(b => new BookDetailsDto
                     {
                         Id = b.Id,
                         Title = b.Title,

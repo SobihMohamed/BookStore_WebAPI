@@ -35,7 +35,7 @@ namespace Application.Features.Categories.Queries.GetEntity
                 Name = category.Name,
 
                 Books = category.Books
-                    .Select(b => new BookDto
+                    .Select(b => new BookDetailsDto
                     {
                         Id = b.Id,
                         Title = b.Title,
